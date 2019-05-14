@@ -13,7 +13,8 @@ import javafx.scene.*;
 /*
  * Networked, multithreaded, GUI Hanabi
  * The Menu class sets up a game, connects to other games, and provides functionality to start a game, 
- * at which point it is handed off to the HanabiGame class
+ * at which point it is handed off to the HanabiGame class.
+ * Inspired by the Hanabi card game and its BoardGameArena implementation.
  */
 
 public class HanabiMenu extends Application {
