@@ -7,25 +7,29 @@ import javafx.scene.paint.Color;
 import javafx.scene.layout.*;
 import javafx.scene.shape.*;
 
+/* Provides a screen showing a visualization of a polar coordinates based city, with tools to move and zoom
+ * 
+ */
+
 public class PolarCity extends Application {
-	Pane pane = new Pane();
-	Pane holdingPane = new Pane();
-	Scene scene = new Scene(holdingPane);
+	private Pane pane = new Pane();
+	private Pane holdingPane = new Pane();
+	private Scene scene = new Scene(holdingPane);
 	
-	double midX = Screen.getPrimary().getBounds().getWidth() / 2;
-	double midY = Screen.getPrimary().getBounds().getHeight() / 2;
-	int rDis = 15;														//Distance from one r to the next
-	final double tau = Math.PI * 2;
-	Line[] theta;
-	Circle[] r;
+	private double midX = Screen.getPrimary().getBounds().getWidth() / 2;
+	private double midY = Screen.getPrimary().getBounds().getHeight() / 2;
+	private int rDis = 15;														//Distance from one r to the next
+	private final double tau = Math.PI * 2;
+	private Line[] theta;
+	private Circle[] r;
 	
 	//Drag and drop the map with the mouse information
-	boolean isDragging = false;
-	double dragX; double dragY;
+	private boolean isDragging = false;
+	private double dragX; double dragY;
 	
 	//The small grey + in the middle
-	Line middleLine1 = new Line(midX - 5, midY, midX + 5, midY);
-	Line middleLine2 = new Line(midX, midY - 5, midX, midY + 5);
+	private Line middleLine1 = new Line(midX - 5, midY, midX + 5, midY);
+	private Line middleLine2 = new Line(midX, midY - 5, midX, midY + 5);
 	
 	public static void main(String[] args) {
 		launch(args);
