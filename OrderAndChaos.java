@@ -13,15 +13,15 @@ import javafx.scene.control.*;
  */
 
 public class OrderAndChaos extends Application {
-	final double boardSize = 30;								//The number of pixels large the physical board is
+	final double boardSize = 30;							//The number of pixels large the physical board is
 	final Color[] stoneColors = new Color[] {Color.RED, Color.BLUE};
 	private Pane pane = new Pane();
 	
 	private Label[][] board = new Label[6][6];					//Where the board is displayed on the screen
 	private int[][] boardState = new int[6][6];					//0=empty, 1=Player 1, 2=Player 2.  They all start at 0
 	private RadioButton[] stoneSelect = new RadioButton[2];				//For selecting which color stone we are placing
-	private int whoUp = 1;										//Either 1 or 2: The player moving
-	private Label turn = new Label("Order's Turn");				//The turn indicator Label
+	private int whoUp = 1;								//Either 1 or 2: The player moving
+	private Label turn = new Label("Order's Turn");					//The turn indicator Label
 	private int selectedStone = -1;
 	
 	public static void main(String[] args) {
