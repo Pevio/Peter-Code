@@ -1,0 +1,1 @@
+Run the HanabiMenu.java file, and it will use all the other classes to make the Hanabi application.  Using networking, you can have users on different computers, provided they are on the same WiFi network.
