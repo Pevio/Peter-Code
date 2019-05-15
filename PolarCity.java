@@ -7,9 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.layout.*;
 import javafx.scene.shape.*;
 
-/* Provides a screen showing a visualization of a polar coordinates based city, with tools to move and zoom
- * 
- */
+//Provides a screen showing a visualization of a polar coordinates based city, with tools to move and zoom
 
 public class PolarCity extends Application {
 	private Pane pane = new Pane();
