@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 
 import java.sql.*;
 
+//A word class to store needed information for a word from the ontology
 class Word {
     String word;
     String meaning;
@@ -26,10 +27,13 @@ class Word {
     public boolean equals(Object o) {
         if (!(o instanceof Word)) return false;
         Word w = (Word)o;
-        //System.out.println(word + " " + w.word);
         return this.word.equals(w.word);
     }
 }
+
+/* Provides a user interface companion for a Phase 1 assistent in the TBTA software.
+ * Finds problems, words, meanings, and suggestions for what can be done in Phase 1.
+*/
 
 public class TBTAA extends Application {
     //SQL
@@ -45,6 +49,7 @@ public class TBTAA extends Application {
     ArrayList<String> hyphenated = new ArrayList<String>();
     ArrayList<String> dehyphenated = new ArrayList<String>();
     
+    ArrayList<String> foundWords = new ArrayList<String>();
     ArrayList<ArrayList<String>> foundWordMeanings = new ArrayList<ArrayList<String>>();
     
     //GUI
@@ -60,7 +65,8 @@ public class TBTAA extends Application {
     Label problems = new Label(PROBLEMS_START);
     final String SUGGESTIONS_START = "Suggestions:\n";
     Label suggestions = new Label(SUGGESTIONS_START);
-    int done = 0;
+    final String MEANINGS_START = ""; boolean meaningsLocked = false;
+    Label meanings = new Label(MEANINGS_START);
 
     public static void main(String[] args) {
         launch(args);
@@ -72,18 +78,21 @@ public class TBTAA extends Application {
         
         //GUI
         Pane pane = new Pane();
-        Scene scene = new Scene(pane, 620, 550);
+        Scene scene = new Scene(pane, 700, 550);
         HBox hbox = new HBox(10);
         hbox.getChildren().addAll(whyFound, whyNotFound, whatAreSuggestions);
         hbox.relocate(10, 10);
-        setDim(text, 600, 120);             text.relocate(10, 50);
+        setDim(text, 680, 120);             text.relocate(10, 50);
         setDim(test, 100, 50);              test.relocate(420, 10);
+        setWidth(meanings, 240);
         
-        problems.relocate(10, 190);
-        words.relocate(220, 190);
-        suggestions.relocate(420, 190);
+        problems.relocate(10, 180);
+        words.relocate(200, 180);
+        suggestions.relocate(360, 180);
+        meanings.relocate(450, 180);
+        meanings.setWrapText(true);
         text.setWrapText(true);
-        pane.getChildren().addAll(hbox, text, words, problems, suggestions);
+        pane.getChildren().addAll(hbox, text, words, problems, suggestions, meanings);
         
         //Handlers
         whyFound.setOnAction(e -> clickWhyFound());
@@ -92,6 +101,9 @@ public class TBTAA extends Application {
         text.setOnKeyReleased(e -> analyze());
         test.setOnAction(e -> analyze());
         text.requestFocus();
+        words.setOnMouseMoved(e -> mouseWords(e.getX(), e.getY()));
+        words.setOnMouseClicked(e -> clickWords());
+        words.setOnMouseExited(e -> mouseExitWords());
         
         stage.setTitle("Phase 1 Assistant");
         stage.setScene(scene);
@@ -101,9 +113,7 @@ public class TBTAA extends Application {
         try {
             Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
         }
-        catch(ClassNotFoundException cnfex) {
-            cnfex.printStackTrace();
-        }
+        catch(ClassNotFoundException cnfex) {}
         try {
             String msAccDB = "Ontology.mdb";
             String dbURL = "jdbc:ucanaccess://" + msAccDB; 
@@ -111,9 +121,7 @@ public class TBTAA extends Application {
             connection = DriverManager.getConnection(dbURL); 
             statement = connection.createStatement();
         }
-        catch(SQLException sqlex){
-            sqlex.printStackTrace();
-        }
+        catch(SQLException sqlex){}
         
         //Get table names
         DatabaseMetaData md = connection.getMetaData();
@@ -129,7 +137,82 @@ public class TBTAA extends Application {
             wordLists[i] = inputWords(tables.get(i));
             if (tables.get(i).equals("Verbs")) verbList = i;
         }
+        // Close database connection
+        try {
+            if(null != connection) {
+                resultSet.close();
+                statement.close();
+                connection.close();
+            }
+        }
+        catch (SQLException sqlex) {}
         
+        setupIrregulars();
+    }
+    private ArrayList<Word> inputWords(String table) {
+        //Returns the list of words from the specified table.
+        ArrayList<Word> list = new ArrayList<Word>();
+        
+        //Try to get words from the table
+        try {
+            resultSet = statement.executeQuery("SELECT * FROM " + table);
+
+            // processing returned data
+            while(resultSet.next()) {
+                String word = resultSet.getString(2);
+                String meaning = "";
+                try {
+                    meaning = resultSet.getString(8);
+                } catch (Exception e) {}
+                
+                list.add(new Word(word, meaning));
+                if (word.contains("-")) {
+                    hyphenated.add(word);
+                    dehyphenated.add(word.replace("-", " "));
+                }
+            }
+        }
+        catch(SQLException sqlex){}
+        
+        if (table.equals("Pronouns")) {
+            //Manually add pronouns
+            list.add(new Word("he"));
+            list.add(new Word("she"));
+            list.add(new Word("him"));
+            list.add(new Word("her"));
+            list.add(new Word("his"));
+            list.add(new Word("you"));
+            list.add(new Word("your"));
+            list.add(new Word("I"));
+            list.add(new Word("me"));
+            list.add(new Word("my"));
+            list.add(new Word("they"));
+            list.add(new Word("them"));
+            list.add(new Word("himself"));
+            list.add(new Word("we"));
+            list.add(new Word("us"));
+            list.add(new Word("our"));
+            list.add(new Word("it"));
+        } else if (table.equals("Particles")) {
+            list.add(new Word("the"));
+            list.add(new Word("a"));
+            list.add(new Word("an"));
+            list.add(new Word("that"));
+            list.add(new Word("those"));
+        } else if (table.equals("Adjectives")) {
+            list.add(new Word("what"));
+        } else if (table.equals("Adverbs")) {
+            list.add(new Word("who"));
+            list.add(new Word("whom"));
+            list.add(new Word("when"));
+            list.add(new Word("where"));
+            list.add(new Word("why"));
+            list.add(new Word("how"));
+        }
+        
+        return list;
+    }
+    public void setupIrregulars() {
         //The list of forms of irregular verbs
         irregularWords.add(new String[]{"be", "was", "were", "ben"});
         irregularWords.add(new String[]{"bear", "bore", "borne"});
@@ -219,6 +302,7 @@ public class TBTAA extends Application {
         irregularWords.add(new String[]{"tell", "told"});
         irregularWords.add(new String[]{"think", "thought"});
         irregularWords.add(new String[]{"throw", "threw", "thrown"});
+        irregularWords.add(new String[]{"was", "is"});
         irregularWords.add(new String[]{"wear", "wore", "worn"});
         irregularWords.add(new String[]{"wind", "wound"});
         irregularWords.add(new String[]{"write", "wrote", "written"});
@@ -229,83 +313,7 @@ public class TBTAA extends Application {
         irregularWords.add(new String[]{"tooth", "teeth"});
         irregularWords.add(new String[]{"foot", "feet"});
         irregularWords.add(new String[]{"person", "people"});
-        
-        // Close database connection
-        try {
-            if(null != connection) {
-                resultSet.close();
-                statement.close();
-                connection.close();
-            }
-        }
-        catch (SQLException sqlex) {
-            sqlex.printStackTrace();
-        }
     }
-    public ArrayList<Word> inputWords(String table) {
-        //Returns the list of words from the specified table.
-        ArrayList<Word> list = new ArrayList<Word>();
-        
-        //Try to get words from the table
-        try {
-            resultSet = statement.executeQuery("SELECT * FROM " + table);
-
-            // processing returned data and printing into console
-            while(resultSet.next()) {
-                String word = resultSet.getString(2);
-                String meaning = "";
-                
-                list.add(new Word(word, meaning));
-                if (word.contains("-")) {
-                    hyphenated.add(word);
-                    dehyphenated.add(word.replace("-", " "));
-                }
-                //if (table.equals("OntologyVersion")) System.out.println(word);
-            }
-        }
-        catch(SQLException sqlex){
-            sqlex.printStackTrace();
-        }
-        
-        if (table.equals("Pronouns")) {
-            //Manually add pronouns
-            list.add(new Word("he"));
-            list.add(new Word("she"));
-            list.add(new Word("him"));
-            list.add(new Word("her"));
-            list.add(new Word("his"));
-            list.add(new Word("you"));
-            list.add(new Word("your"));
-            list.add(new Word("I"));
-            list.add(new Word("me"));
-            list.add(new Word("my"));
-            list.add(new Word("they"));
-            list.add(new Word("them"));
-            list.add(new Word("himself"));
-            list.add(new Word("we"));
-            list.add(new Word("us"));
-            list.add(new Word("our"));
-            list.add(new Word("it"));
-        } else if (table.equals("Particles")) {
-            list.add(new Word("the"));
-            list.add(new Word("a"));
-            list.add(new Word("an"));
-            list.add(new Word("that"));
-            list.add(new Word("those"));
-        } else if (table.equals("Adjectives")) {
-            list.add(new Word("what"));
-        } else if (table.equals("Adverbs")) {
-            list.add(new Word("who"));
-            list.add(new Word("whom"));
-            list.add(new Word("when"));
-            list.add(new Word("where"));
-            list.add(new Word("why"));
-            list.add(new Word("how"));
-        }
-        
-        return list;
-    }
-    
     public void clickWhyFound() {
          new Alert(Alert.AlertType.INFORMATION, "This program attempts to correct plural and verb " +
                  "form issues, and in doing so it may have found a word not intended "
@@ -329,14 +337,17 @@ public class TBTAA extends Application {
         problems.setText(PROBLEMS_START);
         words.setText(WORDS_START);
         suggestions.setText(SUGGESTIONS_START);
+        meanings.setText(MEANINGS_START); meaningsLocked = false;
+        foundWords.clear();
+        foundWords = new ArrayList<String>();
         foundWordMeanings.clear();
+        foundWordMeanings = new ArrayList<ArrayList<String>>();
         
         //Do the words exist
         String whole = text.getText().replace("[", "").replace("]", "");
-        String[] words = whole.split("[^a-zA-Z'()]+");
+        String[] words = whole.split("[^a-zA-Z'()-]+");
         for (int i = 0; i < words.length; i++) {
             if (words[i] == null || words[i].length() == 0) continue;
-            Word foundWord = null;
             
             //Store information
             boolean found = false;
@@ -350,46 +361,55 @@ public class TBTAA extends Application {
             String originalSearchWord = searchWord;
             
             //Keep track of changes to the word
-            boolean changed = false;
             boolean ied = false, ing = false, ed = false, d = false, ses = false, ies = false, s = false;
+            boolean reallyFound = false;
             
             //Try to find the word
             while (!found) {
+                //If we actualy have been found but are running through again, revert to what is correct
+                found = reallyFound;
+                
                 //Search through the word lists
                 for (int j = 0; j < wordLists.length; j++) {
                     //Find word
-                    
-                    int firstLocation = -1;
-                    boolean lower = wordLists[j].contains(new Word(searchWord.toLowerCase()));
-                    boolean upper = wordLists[j].contains(new Word(searchWord));
-                    if (lower || upper) {   //Found
-                        foundWordMeanings.add(new ArrayList<String>());
+                    int firstLocation = wordLists[j].indexOf(new Word(searchWord));
+                    if (firstLocation >= 0) {
+                        //Found
+                        if (!found) {
+                            foundWordMeanings.add(new ArrayList<String>());
+                        }
+                        found = true;
                         listLocation += tables.get(j).substring(0, tables.get(j).length() - 1);
                         if (listLocation.equals("Pronoun") &&
                                 (!words[i].contains("(") || !words[i].contains(")"))) {
                             addToLabel(problems, "Pronoun " + words[i]);
                         }
-                        int newSenses = wordLists[j].lastIndexOf(lower ? 
-                            new Word(searchWord.toLowerCase()) : searchWord) - 
-                            wordLists[j].indexOf(lower ? new Word(searchWord.toLowerCase()) : searchWord) + 1;
-                        for (int k = j; k < j + newSenses; k++) {
+                        int newSenses = wordLists[j].lastIndexOf(new Word(searchWord)) - firstLocation + 1;
+                        for (int k = firstLocation; k < firstLocation + newSenses; k++) {
                             foundWordMeanings.get(foundWordMeanings.size() - 1).add(wordLists[j]
-                                    .get(firstLocation + k).meaning);
+                                    .get(k).meaning);
                         }
                         senses += newSenses;
                     }
-                    found = found || lower || upper; //Update found
                 }
                 //if (changed) break;
+                
+                //Change to lower case
+                if (!searchWord.equals(searchWord.toLowerCase())) {
+                    searchWord = searchWord.toLowerCase();
+                    reallyFound = found;
+                    found = false;
+                    continue;
+                }
                 
                 if (!found) {
                     boolean irregularChange = false;
                     //Irregular words
                     for (int j = 0; j < irregularWords.size(); j++) {
                         for (int k = 0; k < irregularWords.get(j).length; k++) {
-                            if (irregularWords.get(j)[k].equals(searchWord.toLowerCase())) {
+                            if (irregularWords.get(j)[k].equals(searchWord)) {
                                 searchWord = irregularWords.get(j)[0];
-                                changed = true; irregularChange = true;
+                                irregularChange = true;
                             }
                         }
                     }
@@ -404,7 +424,7 @@ public class TBTAA extends Application {
                         if (originalSearchWord.substring(originalSearchWord.length() - 3).equals("ied")
                                 && !ied) {
                             searchWord = originalSearchWord.substring(0, originalSearchWord.length() - 3) + "y";
-                            changed = true; ied = true; continue;
+                            ied = true; continue;
                         }
                     } catch (Exception e) {}
                     try {
@@ -412,7 +432,7 @@ public class TBTAA extends Application {
                         if (originalSearchWord.substring(originalSearchWord.length() - 3).equals("ing")
                                 && !ing) {
                             searchWord = originalSearchWord.substring(0, originalSearchWord.length() - 3);
-                            changed = true; ing = true; continue;
+                            ing = true; continue;
                         }
                     } catch (Exception e) {}
                     try {
@@ -420,7 +440,7 @@ public class TBTAA extends Application {
                         if (originalSearchWord.substring(originalSearchWord.length() - 2).equals("ed")
                                 && !ed) {
                             searchWord = originalSearchWord.substring(0, originalSearchWord.length() - 2);
-                            changed = true; ed = true; continue;
+                            ed = true; continue;
                         }
                     } catch (Exception e) {}
                     try {
@@ -428,7 +448,7 @@ public class TBTAA extends Application {
                         if (originalSearchWord.substring(originalSearchWord.length() - 1).equals("d")
                                 && !d) {
                             searchWord = originalSearchWord.substring(0, originalSearchWord.length() - 1);
-                            changed = true; d = true; continue;
+                            d = true; continue;
                         }
                     } catch (Exception e) {}
                 }
@@ -444,7 +464,7 @@ public class TBTAA extends Application {
                                 originalSearchWord.substring(originalSearchWord.length() - 4).equals("ches")
                                 && !ses) {
                             searchWord = originalSearchWord.substring(0, originalSearchWord.length() - 2);
-                            changed = true; ses = true; continue;
+                            ses = true; continue;
                         }
                     } catch (Exception e) {}
                     try {
@@ -452,7 +472,7 @@ public class TBTAA extends Application {
                         if (originalSearchWord.substring(originalSearchWord.length() - 3).equals("ies")
                                 && !ies) {
                             searchWord = originalSearchWord.substring(0, originalSearchWord.length() - 3) + "y";
-                            changed = true; ies = true; continue;
+                            ies = true; continue;
                         }
                     } catch (Exception e) {}
                     try {
@@ -460,7 +480,7 @@ public class TBTAA extends Application {
                         if (originalSearchWord.substring(originalSearchWord.length() - 1).equals("s")
                                 && !s) {
                             searchWord = originalSearchWord.substring(0, originalSearchWord.length() - 1);
-                            changed = true; s = true; continue;
+                            s = true; continue;
                         }
                     } catch (Exception e) {}
                 }
@@ -474,7 +494,7 @@ public class TBTAA extends Application {
                 addToLabel(problems, words[i] + " not found.");
             } else {
                 addToLabel(this.words, words[i] + ": " + listLocation + "; " + senses);
-                //foundWords.add(words[i]));
+                foundWords.add(words[i]);
             }
         }
         
@@ -493,14 +513,35 @@ public class TBTAA extends Application {
             addToLabel(problems, "Bracket problem");
         }
 
-        //Hyphenated phrases
+        //Hyphenated phrases, for suggestions
         for (int i = 0; i < hyphenated.size(); i++) {
             if (text.getText().toLowerCase().contains(dehyphenated.get(i)) && !hyphenated.get(i).contains("1")) {
                 addToLabel(suggestions, hyphenated.get(i));
             }
         }
     }
-
+    
+    public void mouseWords(double x, double y) {
+        //Update the meanings with the senses of the word that is moused over
+        if (meaningsLocked) return;
+        int word = (int)((foundWords.size() + 1) * (y) / (words.getHeight())) - 1;
+        if (word >= 0) {
+            try {
+                meanings.setText(foundWords.get(word) + ":\n");
+                for (int i = 0; i < foundWordMeanings.get(word).size(); i++) {
+                    addToLabel(meanings, "*" + foundWordMeanings.get(word).get(i));
+                }
+            } catch (Exception e) {}
+        } else {
+            meanings.setText(MEANINGS_START);
+        }
+    }
+    public void clickWords() {
+        meaningsLocked = !meaningsLocked;
+    }
+    public void mouseExitWords() {
+        if (!meaningsLocked) meanings.setText(MEANINGS_START);
+    }
     public void setWidth(Region region, double width) {
         region.setMinWidth(width);
         region.setMaxWidth(width);
