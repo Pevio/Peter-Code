@@ -1,7 +1,8 @@
-import java.util.*;
+import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.scene.*;
+import javafx.scene.text.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
@@ -20,10 +21,12 @@ class Word {
         this.word = word;
         this.meaning = meaning;
     }
+    @Override
     public String toString() {
         return word;
     }
     
+    @Override
     public boolean equals(Object o) {
         if (!(o instanceof Word)) return false;
         Word w = (Word)o;
@@ -36,11 +39,6 @@ class Word {
 */
 
 public class TBTAA extends Application {
-    //SQL
-    Connection connection = null;
-    Statement statement = null;
-    ResultSet resultSet = null;
-
     //Info from database
     ArrayList<String> tables = new ArrayList<String>();
     ArrayList<Word>[] wordLists;
@@ -101,7 +99,8 @@ public class TBTAA extends Application {
         text.setOnKeyReleased(e -> analyze());
         test.setOnAction(e -> analyze());
         text.requestFocus();
-        words.setOnMouseMoved(e -> mouseWords(e.getX(), e.getY()));
+        text.setFont(new Font(14));
+        words.setOnMouseMoved(e -> mouseWords(e.getY()));
         words.setOnMouseClicked(e -> clickWords());
         words.setOnMouseExited(e -> mouseExitWords());
         
@@ -109,6 +108,11 @@ public class TBTAA extends Application {
         stage.setScene(scene);
         stage.show();
 
+        //SQL
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+    
         //Initialize database connection
         try {
             Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
@@ -134,87 +138,84 @@ public class TBTAA extends Application {
         //Get words
         for (int i = 0; i < tables.size(); i++) {
             wordLists[i] = new ArrayList<Word>();
-            wordLists[i] = inputWords(tables.get(i));
+            String table = tables.get(i);
+            ArrayList<Word> list = new ArrayList<Word>();
+
+            //Try to get words from the table
+            try {
+                resultSet = statement.executeQuery("SELECT * FROM " + table);
+
+                // processing returned data
+                while(resultSet.next()) {
+                    String word = resultSet.getString(2);
+                    String meaning = "";
+                    try {
+                        meaning = resultSet.getString(8);
+                    } catch (Exception e) {}
+
+                    list.add(new Word(word, meaning));
+                    if (word.contains("-") && !word.equals("-1")) {
+                        hyphenated.add(word);
+                        dehyphenated.add(word.replace("-", " "));
+                        hyphenated.add(word);
+                        dehyphenated.add(word.replace("-", ""));
+                    }
+                }
+            }
+            catch(SQLException sqlex){}
+
+            if (table.equals("Pronouns")) {
+                //Manually add pronouns
+                list.add(new Word("he"));
+                list.add(new Word("she"));
+                list.add(new Word("him"));
+                list.add(new Word("her"));
+                list.add(new Word("his"));
+                list.add(new Word("you"));
+                list.add(new Word("your"));
+                list.add(new Word("I"));
+                list.add(new Word("me"));
+                list.add(new Word("my"));
+                list.add(new Word("they"));
+                list.add(new Word("them"));
+                list.add(new Word("himself"));
+                list.add(new Word("we"));
+                list.add(new Word("us"));
+                list.add(new Word("our"));
+                list.add(new Word("it"));
+            } else if (table.equals("Particles")) {
+                list.add(new Word("the"));
+                list.add(new Word("a"));
+                list.add(new Word("an"));
+                list.add(new Word("that"));
+                list.add(new Word("those"));
+            } else if (table.equals("Adjectives")) {
+                list.add(new Word("what"));
+            } else if (table.equals("Adverbs")) {
+                list.add(new Word("who"));
+                list.add(new Word("whom"));
+                list.add(new Word("when"));
+                list.add(new Word("where"));
+                list.add(new Word("why"));
+                list.add(new Word("how"));
+            }
             if (tables.get(i).equals("Verbs")) verbList = i;
+            
+            wordLists[i] = list;
         }
         // Close database connection
         try {
-            if(null != connection) {
-                resultSet.close();
-                statement.close();
-                connection.close();
-            }
+            resultSet.close();
+            statement.close();
+            connection.close();
         }
         catch (SQLException sqlex) {}
         
         setupIrregulars();
     }
-    private ArrayList<Word> inputWords(String table) {
-        //Returns the list of words from the specified table.
-        ArrayList<Word> list = new ArrayList<Word>();
-        
-        //Try to get words from the table
-        try {
-            resultSet = statement.executeQuery("SELECT * FROM " + table);
-
-            // processing returned data
-            while(resultSet.next()) {
-                String word = resultSet.getString(2);
-                String meaning = "";
-                try {
-                    meaning = resultSet.getString(8);
-                } catch (Exception e) {}
-                
-                list.add(new Word(word, meaning));
-                if (word.contains("-")) {
-                    hyphenated.add(word);
-                    dehyphenated.add(word.replace("-", " "));
-                }
-            }
-        }
-        catch(SQLException sqlex){}
-        
-        if (table.equals("Pronouns")) {
-            //Manually add pronouns
-            list.add(new Word("he"));
-            list.add(new Word("she"));
-            list.add(new Word("him"));
-            list.add(new Word("her"));
-            list.add(new Word("his"));
-            list.add(new Word("you"));
-            list.add(new Word("your"));
-            list.add(new Word("I"));
-            list.add(new Word("me"));
-            list.add(new Word("my"));
-            list.add(new Word("they"));
-            list.add(new Word("them"));
-            list.add(new Word("himself"));
-            list.add(new Word("we"));
-            list.add(new Word("us"));
-            list.add(new Word("our"));
-            list.add(new Word("it"));
-        } else if (table.equals("Particles")) {
-            list.add(new Word("the"));
-            list.add(new Word("a"));
-            list.add(new Word("an"));
-            list.add(new Word("that"));
-            list.add(new Word("those"));
-        } else if (table.equals("Adjectives")) {
-            list.add(new Word("what"));
-        } else if (table.equals("Adverbs")) {
-            list.add(new Word("who"));
-            list.add(new Word("whom"));
-            list.add(new Word("when"));
-            list.add(new Word("where"));
-            list.add(new Word("why"));
-            list.add(new Word("how"));
-        }
-        
-        return list;
-    }
-    public void setupIrregulars() {
+    public final void setupIrregulars() {
         //The list of forms of irregular verbs
-        irregularWords.add(new String[]{"be", "was", "were", "ben"});
+        irregularWords.add(new String[]{"be", "was", "were", "been", "is", "am", "are"});
         irregularWords.add(new String[]{"bear", "bore", "borne"});
         irregularWords.add(new String[]{"beat", "beaten"});
         irregularWords.add(new String[]{"begin", "began", "begun"});
@@ -302,7 +303,6 @@ public class TBTAA extends Application {
         irregularWords.add(new String[]{"tell", "told"});
         irregularWords.add(new String[]{"think", "thought"});
         irregularWords.add(new String[]{"throw", "threw", "thrown"});
-        irregularWords.add(new String[]{"was", "is"});
         irregularWords.add(new String[]{"wear", "wore", "worn"});
         irregularWords.add(new String[]{"wind", "wound"});
         irregularWords.add(new String[]{"write", "wrote", "written"});
@@ -314,6 +314,7 @@ public class TBTAA extends Application {
         irregularWords.add(new String[]{"foot", "feet"});
         irregularWords.add(new String[]{"person", "people"});
     }
+    
     public void clickWhyFound() {
          new Alert(Alert.AlertType.INFORMATION, "This program attempts to correct plural and verb " +
                  "form issues, and in doing so it may have found a word not intended "
@@ -324,12 +325,12 @@ public class TBTAA extends Application {
         new Alert(Alert.AlertType.INFORMATION, "There are many oddities in the English language.  " +
                 "While this program attempts to include as many forms of verbs and plurals as " +
                 "possible, not all are accounted for.  You can try the original form of the word " +
-                "(wife instead of wives), but TBTA is always the final answer as to whether or " +
+                "('wife' instead of 'wives'), but TBTA is always the final answer as to whether or " +
                 "not a word can be included in Phase 1.").showAndWait();
     }
     public void clickWhatAreSuggestions() {
-        new Alert(Alert.AlertType.INFORMATION, "Using hyphens (like 'in-order-that' as opposed to " +
-                "'in order that' increases the meaning garnered by the analyzer in Phase 1.").showAndWait();
+        new Alert(Alert.AlertType.INFORMATION, "Using hyphens (like 'write-down' as opposed to " +
+                "'write down' increases the meaning garnered by the analyzer in Phase 1.").showAndWait();
     }
     
     public void analyze() {
@@ -392,7 +393,6 @@ public class TBTAA extends Application {
                         senses += newSenses;
                     }
                 }
-                //if (changed) break;
                 
                 //Change to lower case
                 if (!searchWord.equals(searchWord.toLowerCase())) {
@@ -515,19 +515,20 @@ public class TBTAA extends Application {
 
         //Hyphenated phrases, for suggestions
         for (int i = 0; i < hyphenated.size(); i++) {
-            if (text.getText().toLowerCase().contains(dehyphenated.get(i)) && !hyphenated.get(i).contains("1")) {
+            if (text.getText().toLowerCase().contains(dehyphenated.get(i))) {
                 addToLabel(suggestions, hyphenated.get(i));
             }
         }
     }
     
-    public void mouseWords(double x, double y) {
+    public void mouseWords(double y) {
         //Update the meanings with the senses of the word that is moused over
         if (meaningsLocked) return;
         int word = (int)((foundWords.size() + 1) * (y) / (words.getHeight())) - 1;
         if (word >= 0) {
             try {
                 meanings.setText(foundWords.get(word) + ":\n");
+                //Put meanings in the label
                 for (int i = 0; i < foundWordMeanings.get(word).size(); i++) {
                     addToLabel(meanings, "*" + foundWordMeanings.get(word).get(i));
                 }
@@ -537,9 +538,11 @@ public class TBTAA extends Application {
         }
     }
     public void clickWords() {
+        //Toggles the locked setting for meanings
         meaningsLocked = !meaningsLocked;
     }
     public void mouseExitWords() {
+        //If not locked, clear the display of meanings
         if (!meaningsLocked) meanings.setText(MEANINGS_START);
     }
     public void setWidth(Region region, double width) {
