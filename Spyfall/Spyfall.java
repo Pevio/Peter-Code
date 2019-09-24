@@ -150,11 +150,7 @@ public class Spyfall extends Application {
 			lblName.setFont(new Font(16));
 
 			Label location = new Label();
-			if (playerRoles[index].equals("Spy")) {
-				location.setText("???");
-			} else {
-				location.setText(locationNames[currentLocation]);
-			}
+			location.setText(playerRoles[index].equals("Spy") ? "???" : location.setText(locationNames[currentLocation]);
 			location.setFont(new Font(16));
 
 			Label role = new Label(playerRoles[index]);
@@ -208,12 +204,7 @@ public class Spyfall extends Application {
 			for (int i = 0; i < 8; i++) {
 				names[i].setText(input2.nextLine());
 			}
-			String a = input2.nextLine();
-			if (a.equals("true")) {
-				chkRoles.setSelected(true);
-			} else {
-				chkRoles.setSelected(false);
-			}
+			chkRoles.setSelected(input2.nextLine.equals("true"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
