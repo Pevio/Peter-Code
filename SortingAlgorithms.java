@@ -4,16 +4,16 @@ public class SortingAlgorithms {
 	public static void main(String[] args) {
 		//Makes integer arrays of various sizes and sorts them using various sorting algorithms
 		int[] a1 = generate(10);
-		//int[] a2 = generate(1000);
-		//int[] a3 = generate(100000);
-		//int[] a4 = generate(1000000);
+//		int[] a2 = generate(1000);
+//		int[] a3 = generate(100000);
+//		int[] a4 = generate(1000000);
 		//int[] a5 = generate(10000000);
 		
 		sort(a1);
-		//sort(a2);
-		//sort(a3);
-		//sort(a4);
-		//sort(a5);
+//		sort(a2);
+//		sort(a3);
+//		sort(a4);
+//		sort(a5);
 	}
 	public static void sort(int[] e) {
 		//Sorts an array with all four algorithms and prints the currentTimeMillis() to show how long they took
@@ -21,7 +21,7 @@ public class SortingAlgorithms {
 		
 		if (e.length == 10) printArray(e);
 		int[] newE = e.clone();
-		insertionSort(newE);
+		//insertionSort(newE);
 		result += System.currentTimeMillis() + ";";
 		
 		mergeSort(e.clone());
@@ -31,8 +31,10 @@ public class SortingAlgorithms {
 		result += System.currentTimeMillis() + ";";
 		
 		quickSort(e.clone());
-		result += System.currentTimeMillis();
+		result += System.currentTimeMillis() + ";";
 		
+		radixSort(e, 5);
+		result += System.currentTimeMillis() + ";";
 		System.out.println(result);
 		if (e.length == 10) printArray(newE);
 	}
@@ -45,7 +47,7 @@ public class SortingAlgorithms {
 		System.out.println();
 	}
 	public static int[] generate(int size) {
-		//Generates a random array
+		//Generates a random integer array with the appropriate size of elements and the specified size
 		int[] result = new int[size];
 		for (int i = 0; i < size; i++) {
 			result[i] = (int)(Math.random() * 89999) + 10000;
@@ -187,5 +189,34 @@ public class SortingAlgorithms {
 		e[i] = e[r - 1];
 		e[r - 1] = temp;
 		return i;
+	}
+	
+	//Linear sorting algorithms
+	public static void countingSort(int[] e, int k, int d) {
+		int[] B = new int[e.length];
+		int[] C = new int[k + 1];
+		
+		for (int i = 0; i < e.length; i++) {
+			C[convertElement(e[i], d)]++;
+		}
+		for (int i = 1; i <= k; i++) {
+			C[i] += C[i - 1];
+		}
+		for (int i = e.length - 1; i >= 0; i--) {
+			B[C[convertElement(e[i], d)] - 1] = e[i];
+			C[convertElement(e[i], d)]--;
+		}
+		
+		for (int i = 0; i < e.length; i++) {
+			e[i] = B[i];
+		}
+	}
+	public static int convertElement(int e, int d) {
+		return (int)((e * 1.0) / Math.pow(10, d - 1)) % 10;
+	}
+	public static void radixSort(int[] e, int d) {
+		for (int i = 1; i <= d; i++) {
+			countingSort(e, 9, i);
+		}
 	}
 }
