@@ -213,11 +213,8 @@ public class HanabiGame {
 			actionHelp.setText("Choose a card from your hand to discard.");
 			break;
 		case 2:
-			actionHelp.setText("");
-			break;
 		case 3:
 			actionHelp.setText("");
-			break;
 		}
 		if (index > 1) {
 			//Clue
