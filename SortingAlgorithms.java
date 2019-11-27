@@ -1,42 +1,46 @@
+import java.util.*;
 
 public class SortingAlgorithms {
-
 	public static void main(String[] args) {
 		//Makes integer arrays of various sizes and sorts them using various sorting algorithms
+		
 		int[] a1 = generate(10);
-//		int[] a2 = generate(1000);
-//		int[] a3 = generate(100000);
-//		int[] a4 = generate(1000000);
-		//int[] a5 = generate(10000000);
+		int[] a2 = generate(1000);
+		int[] a3 = generate(100000);
+		int[] a4 = generate(1000000);
+		int[] a5 = generate(10000000);
 		
 		sort(a1);
-//		sort(a2);
-//		sort(a3);
-//		sort(a4);
-//		sort(a5);
+		sort(a2);
+		sort(a3);
+		sort(a4);
+		//sort(a5);
 	}
 	public static void sort(int[] e) {
 		//Sorts an array with all four algorithms and prints the currentTimeMillis() to show how long they took
 		String result = e.length + ";" + System.currentTimeMillis() + ";";
 		
 		if (e.length == 10) printArray(e);
-		int[] newE = e.clone();
-		//insertionSort(newE);
+		int[] e_is = e.clone(), e_ms = e.clone(), e_hs = e.clone(), e_qs = e.clone();
+		insertionSort(e_is);
 		result += System.currentTimeMillis() + ";";
 		
-		mergeSort(e.clone());
+		mergeSort(e_ms);
 		result += System.currentTimeMillis() + ";";
 		
-		heapSort(e.clone());
+		heapSort(e_hs);
 		result += System.currentTimeMillis() + ";";
 		
-		quickSort(e.clone());
+		quickSort(e_qs);
 		result += System.currentTimeMillis() + ";";
 		
-		radixSort(e, 5);
-		result += System.currentTimeMillis() + ";";
 		System.out.println(result);
-		if (e.length == 10) printArray(newE);
+		if (e.length == 10) {
+			printArray(e_is);
+			printArray(e_ms);
+			printArray(e_hs);
+			printArray(e_qs);
+		}
 	}
 	
 	public static void printArray(int[] e) {
@@ -46,6 +50,14 @@ public class SortingAlgorithms {
 		}
 		System.out.println();
 	}
+	public static void printArray(double[] e) {
+		//Prints the contents of an array
+		for (int i = 0; i< e.length; i++) {
+			System.out.print(e[i] + " ");
+		}
+		System.out.println();
+	}
+	
 	public static int[] generate(int size) {
 		//Generates a random integer array with the appropriate size of elements and the specified size
 		int[] result = new int[size];
@@ -54,20 +66,24 @@ public class SortingAlgorithms {
 		}
 		return result;
 	}
+	public static double[] generateDoubles(int size) {
+		double[] result = new double[size];
+		for (int i = 0; i < size; i++) {
+			result[i] = Math.random();
+		}
+		return result;
+	}
 	
 	//Insertion sort: n^2 running time
 	public static void insertionSort(int[] e) {
 		for (int i = 1; i < e.length; i++) {
-			for (int j = 0; j < i; j++) {
-				if (e[i] < e[j]) {
-					//Insert
-					int temp = e[i];
-					for (int k = i; k > j; k--) {
-						e[k] = e[k - 1];
-					}
-					e[j] = temp;
-				}
+			int key = e[i];
+			int j = i - 1;
+			while (j >= 0 && e[j] > key) {
+				e[j + 1] = e[j];
+				j--;
 			}
+			e[j + 1] = key;
 		}
 	}
 	
@@ -79,6 +95,7 @@ public class SortingAlgorithms {
 		//r is start, q is 1 past the finish
 		if (r + 1 == q) return;
 		mergeSort(e, r, (q + r) / 2);
+		
 		mergeSort(e, (q + r) / 2, q);
 		merge(e, r, (q + r) / 2, q);
 	}
@@ -117,36 +134,40 @@ public class SortingAlgorithms {
 	//Heap Sort: nlgn runnning time
 	public static void heapSort(int[] e) {
 		buildMaxHeap(e, e.length);
+		int size = e.length;
 		//Pull largest element to back of array
-		for (int i = 0; i < e.length; i++) {
-			extractMax(e, e.length - i);
+		for (int i = e.length - 1; i > 0; i--) {
+			int temp = e[0];
+			e[0] = e[i];
+			e[i] = temp;
+			size--;
+			
+			maxHeapify(e, 0, size);
 		}
 	}
 	public static void buildMaxHeap(int[] e, int size) {
 		//Converts a heap into a max-heap
-		for (int i = 0; i >= 0; i--) {
-			maxHeapify(e, parent(e.length - 1), size);
+		for (int i = parent(size - 1); i >= 0; i--) {
+			maxHeapify(e, i, size);
 		}
 	}
 	public static void maxHeapify(int e[], int p, int size) {
-		//Fixes a single bad node
-		int bigger = 0;
-		if (left(p) >= size) return;
-		if (right(p) == size) bigger = left(p);
-		bigger = e[left(p)] > e[right(p)] ? left(p) : right(p);
-		if (e[bigger] > e[p]) {
-			int temp = e[p];
-			e[p] = e[bigger];
-			e[bigger] = temp;
-			maxHeapify(e, bigger, size);
+		//Fixes a single bad node: p is the node in question
+		int largest = p;
+		int l = left(p);
+		int r = right(p);
+		if (l < size) {
+			if (e[l] > e[p]) largest = l;
 		}
-	}
-	public static void extractMax(int[] e, int size) {
-		//Moves the largest element of a max-heap to the back of the array and max-heapifys it
-		int temp = e[0];
-		e[0] = e[size - 1];
-		e[size - 1] = temp;
-		maxHeapify(e, 0, size - 1);
+		if (r < size) {
+			if (e[r] > e[largest]) largest = r;
+		}
+		if (largest != p) {
+			int temp = e[p];
+			e[p] = e[largest];
+			e[largest] = temp;
+			maxHeapify(e, largest, size);
+		}
 	}
 	//Heap sort helper methods
 	public static int parent(int p) {
@@ -212,11 +233,33 @@ public class SortingAlgorithms {
 		}
 	}
 	public static int convertElement(int e, int d) {
+		//When sorting by a particular digit, this function returns the specified digit from an element
 		return (int)((e * 1.0) / Math.pow(10, d - 1)) % 10;
 	}
 	public static void radixSort(int[] e, int d) {
 		for (int i = 1; i <= d; i++) {
 			countingSort(e, 9, i);
+		}
+	}
+	
+	public static void bucketSort(double[] e) {
+		@SuppressWarnings("unchecked")
+		ArrayList<Double>[] buckets = new ArrayList[e.length];
+		for (int i = 0; i < buckets.length; i++) {
+			buckets[i] = new ArrayList<Double>(2);
+		}
+		for (int i = 0; i < e.length; i++) {
+			buckets[(int)(e.length * e[i])].add(e[i]);
+		}
+		for (int i = 0; i < buckets.length; i++) {
+			if (!buckets[i].isEmpty()) Collections.sort(buckets[i]);
+		}
+		int current = 0;
+		for (int i = 0; i < buckets.length; i++) {
+			for (int j = 0; j < buckets[i].size(); j++) {
+				e[current] = buckets[i].get(j);
+				current++;
+			}
 		}
 	}
 }
