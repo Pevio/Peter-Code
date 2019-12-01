@@ -3,13 +3,13 @@ import java.util.*;
 public class SortingAlgorithms {
 	public static void main(String[] args) {
 		//Makes integer arrays of various sizes and sorts them using various sorting algorithms
-		
+
 		int[] a1 = generate(10);
 		int[] a2 = generate(1000);
 		int[] a3 = generate(100000);
 		int[] a4 = generate(1000000);
 		int[] a5 = generate(10000000);
-		
+
 		sort(a1);
 		sort(a2);
 		sort(a3);
@@ -19,21 +19,21 @@ public class SortingAlgorithms {
 	public static void sort(int[] e) {
 		//Sorts an array with all four algorithms and prints the currentTimeMillis() to show how long they took
 		String result = e.length + ";" + System.currentTimeMillis() + ";";
-		
+
 		if (e.length == 10) printArray(e);
 		int[] e_is = e.clone(), e_ms = e.clone(), e_hs = e.clone(), e_qs = e.clone();
 		insertionSort(e_is);
 		result += System.currentTimeMillis() + ";";
-		
+
 		mergeSort(e_ms);
 		result += System.currentTimeMillis() + ";";
-		
+
 		heapSort(e_hs);
 		result += System.currentTimeMillis() + ";";
-		
+
 		quickSort(e_qs);
 		result += System.currentTimeMillis() + ";";
-		
+
 		System.out.println(result);
 		if (e.length == 10) {
 			printArray(e_is);
@@ -42,7 +42,7 @@ public class SortingAlgorithms {
 			printArray(e_qs);
 		}
 	}
-	
+
 	public static void printArray(int[] e) {
 		//Prints the contents of an array
 		for (int i = 0; i< e.length; i++) {
@@ -57,7 +57,7 @@ public class SortingAlgorithms {
 		}
 		System.out.println();
 	}
-	
+
 	public static int[] generate(int size) {
 		//Generates a random integer array with the appropriate size of elements and the specified size
 		int[] result = new int[size];
@@ -73,41 +73,47 @@ public class SortingAlgorithms {
 		}
 		return result;
 	}
-	
+
 	//Insertion sort: n^2 running time
 	public static void insertionSort(int[] e) {
 		for (int i = 1; i < e.length; i++) {
 			int key = e[i];
 			int j = i - 1;
+
+			//Move elements until the key is in the right spot
 			while (j >= 0 && e[j] > key) {
 				e[j + 1] = e[j];
 				j--;
 			}
+
+			//Insert the key
 			e[j + 1] = key;
 		}
 	}
-	
+
 	//Merge sort: nlgn running time
 	public static void mergeSort(int[] e) {
+		//Initial call
 		mergeSort(e, 0, e.length);
 	}
 	public static void mergeSort(int[] e, int r, int q) {
 		//r is start, q is 1 past the finish
 		if (r + 1 == q) return;
+		//Split into two smaller arrays
 		mergeSort(e, r, (q + r) / 2);
-		
 		mergeSort(e, (q + r) / 2, q);
+		//Combine
 		merge(e, r, (q + r) / 2, q);
 	}
 	public static void merge(int[] e, int p, int q, int r) {
 		//p is start of first, q is start of second, r is start of third
-		
-		//Create the two parts of the arrays
+
+		//Create the two parts of the arrays and fill the L and R arrays
 		int n1 = q - p;
 		int n2 = r - q;
 		int[] L = new int[n1 + 1];
 		int[] R = new int[n2 + 1];
-		
+
 		for (int i = 0; i < n1; i++) {
 			L[i] = e[p + i];
 		}
@@ -116,7 +122,7 @@ public class SortingAlgorithms {
 			R[i] = e[q + i];
 		}
 		R[n2] = Integer.MAX_VALUE;
-		
+
 		//Merge them into e[]
 		int i = 0;
 		int j = 0;
@@ -130,7 +136,7 @@ public class SortingAlgorithms {
 			}
 		}
 	}
-	
+
 	//Heap Sort: nlgn runnning time
 	public static void heapSort(int[] e) {
 		buildMaxHeap(e, e.length);
@@ -141,7 +147,7 @@ public class SortingAlgorithms {
 			e[0] = e[i];
 			e[i] = temp;
 			size--;
-			
+			//Fix heap problems that may have occurred
 			maxHeapify(e, 0, size);
 		}
 	}
@@ -152,17 +158,14 @@ public class SortingAlgorithms {
 		}
 	}
 	public static void maxHeapify(int e[], int p, int size) {
-		//Fixes a single bad node: p is the node in question
+		//Fixes a single bad node, if nessecary: p is the node in question
 		int largest = p;
 		int l = left(p);
 		int r = right(p);
-		if (l < size) {
-			if (e[l] > e[p]) largest = l;
-		}
-		if (r < size) {
-			if (e[r] > e[largest]) largest = r;
-		}
+		if (l < size) if (e[l] > e[p]) largest = l;
+		if (r < size) if (e[r] > e[largest]) largest = r;
 		if (largest != p) {
+			//Fix the node and make the recursive call
 			int temp = e[p];
 			e[p] = e[largest];
 			e[largest] = temp;
@@ -179,9 +182,10 @@ public class SortingAlgorithms {
 	public static int right(int p) {
 		return 2 * p + 1;
 	}
-	
+
 	//QuickSort: n^2 worst case; nlgn average case running time
 	public static void quickSort(int[] e) {
+		//Initial call
 		quickSort(e, 0, e.length);
 	}
 	public static void quickSort(int[] e, int p, int r) {
@@ -197,13 +201,14 @@ public class SortingAlgorithms {
 		int i = p - 1;
 		for (int j = p; j < r - 1; j++) {
 			if (e[j] <= x) {
+				//Move the element
 				i++;
 				int temp = e[i];
 				e[i] = e[j];
 				e[j] = temp;
 			}
 		}
-		
+
 		//Move the pivot element then return its position
 		i++;
 		int temp = e[i];
@@ -211,12 +216,12 @@ public class SortingAlgorithms {
 		e[r - 1] = temp;
 		return i;
 	}
-	
+
 	//Linear sorting algorithms
 	public static void countingSort(int[] e, int k, int d) {
 		int[] B = new int[e.length];
 		int[] C = new int[k + 1];
-		
+
 		for (int i = 0; i < e.length; i++) {
 			C[convertElement(e[i], d)]++;
 		}
@@ -227,7 +232,7 @@ public class SortingAlgorithms {
 			B[C[convertElement(e[i], d)] - 1] = e[i];
 			C[convertElement(e[i], d)]--;
 		}
-		
+
 		for (int i = 0; i < e.length; i++) {
 			e[i] = B[i];
 		}
@@ -241,7 +246,7 @@ public class SortingAlgorithms {
 			countingSort(e, 9, i);
 		}
 	}
-	
+
 	public static void bucketSort(double[] e) {
 		@SuppressWarnings("unchecked")
 		ArrayList<Double>[] buckets = new ArrayList[e.length];
