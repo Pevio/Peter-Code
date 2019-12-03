@@ -11,17 +11,24 @@ public class SortingAlgorithms {
 		int[] a5 = generate(10000000);
 
 		sort(a1);
-		sort(a2);
-		sort(a3);
-		sort(a4);
+		//sort(a2);
+		//sort(a3);
+		//sort(a4);
 		//sort(a5);
 	}
 	public static void sort(int[] e) {
 		//Sorts an array with all four algorithms and prints the currentTimeMillis() to show how long they took
 		String result = e.length + ";" + System.currentTimeMillis() + ";";
 
-		if (e.length == 10) printArray(e);
+		//if (e.length == 10) printArray(e);
 		int[] e_is = e.clone(), e_ms = e.clone(), e_hs = e.clone(), e_qs = e.clone();
+		if (e.length == 10) {
+			printArray(e_is);
+			printArray(e_ms);
+			printArray(e_hs);
+			printArray(e_qs);
+		}
+		
 		insertionSort(e_is);
 		result += System.currentTimeMillis() + ";";
 
