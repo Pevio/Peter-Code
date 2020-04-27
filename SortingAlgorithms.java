@@ -1,3 +1,5 @@
+This is a java implementation of a variety of sorting algorithms that I made primarily for my Algorithms class.
+
 import java.util.*;
 
 public class SortingAlgorithms {
