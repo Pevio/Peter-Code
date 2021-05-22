@@ -1,7 +1,3 @@
-Bible Quiz Academy is a JavaFX application I made on my own time
-that is available for download that many people have used.
-The source code is proprietary,
-but code snippets and screenshots are available upon request.
+Bible Quiz Academy is a ReactJS application I made on my own time that is available for free that many people have used.  The source code is proprietary, but code snippets and screenshots are available upon request.
 
-Or see for yourself at
-biblequizacademy.wordpress.com
+Or see for yourself at biblequizacademy.com
